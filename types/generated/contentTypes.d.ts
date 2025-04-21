@@ -377,7 +377,7 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
     singularName: 'message';
   };
   options: {
-    draftAndPublish: false;
+    draftAndPublish: true;
   };
   attributes: {
     content: Schema.Attribute.Text & Schema.Attribute.Required;
@@ -396,6 +396,9 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     sender: Schema.Attribute.String & Schema.Attribute.Required;
     senderName: Schema.Attribute.String & Schema.Attribute.Required;
+    status: Schema.Attribute.Enumeration<['sending', 'sent', 'error']> &
+      Schema.Attribute.DefaultTo<'sending'>;
+    tempMessageId: Schema.Attribute.String;
     timestamp: Schema.Attribute.DateTime & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

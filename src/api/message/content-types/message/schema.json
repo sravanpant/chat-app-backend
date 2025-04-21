@@ -7,7 +7,7 @@
     "displayName": "Message"
   },
   "options": {
-    "draftAndPublish": false
+    "draftAndPublish": true
   },
   "attributes": {
     "content": {
@@ -30,6 +30,14 @@
       "type": "string",
       "required": true,
       "unique": true
+    },
+    "tempMessageId": {
+      "type": "string"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["sending", "sent", "error"],
+      "default": "sending"
     }
   }
 }

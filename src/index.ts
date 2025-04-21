@@ -1,6 +1,6 @@
 // backend/src/index.ts
 
-export default {
+module.exports = {
   async bootstrap({ strapi }) {
     const io = require("socket.io")(strapi.server.httpServer, {
       cors: {
@@ -16,14 +16,19 @@ export default {
 
       socket.on("message", async (messageData) => {
         try {
-          // Properly format the data for Strapi
+          // Generate a unique messageId for Strapi
+          const permanentMessageId = `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          
+          // Prepare data for Strapi with all required fields
           const dataToSave = {
             data: {
               content: messageData.content,
               sender: messageData.sender,
               senderName: messageData.senderName,
               timestamp: messageData.timestamp,
-              messageId: messageData.messageId,
+              messageId: permanentMessageId,
+              tempMessageId: messageData.messageId,
+              status: "sending"
             },
           };
 
@@ -33,27 +38,37 @@ export default {
             dataToSave
           );
 
-          // Broadcast the saved message
-          io.emit("newMessage", {
-            id: savedMessage.id,
+          if (!savedMessage) {
+            throw new Error("Failed to save message");
+          }
+
+          // Transform the saved message for broadcasting
+          const broadcastMessage = {
+            messageId: savedMessage.id,
             content: savedMessage.content,
             sender: savedMessage.sender,
             senderName: savedMessage.senderName,
             timestamp: savedMessage.timestamp,
-            messageId: savedMessage.messageId,
             createdAt: savedMessage.createdAt,
             updatedAt: savedMessage.updatedAt,
             publishedAt: savedMessage.publishedAt,
-          });
+            status: "sent",
+            tempMessageId: savedMessage.tempMessageId
+          };
 
-          console.log("Message saved and broadcasted:", savedMessage);
+          // Broadcast to all clients including sender
+          io.emit("newMessage", broadcastMessage);
+          console.log("Message saved and broadcasted:", broadcastMessage);
         } catch (error) {
           console.error("Error saving message:", error);
-          socket.emit("error", { message: "Error saving message" });
+          // Send error back to the sender
+          socket.emit("messageError", { 
+            messageId: messageData.messageId,
+            error: "Failed to save message to database"
+          });
         }
       });
 
-      // Handle typing events
       socket.on("typing", () => {
         socket.broadcast.emit("typing");
       });
